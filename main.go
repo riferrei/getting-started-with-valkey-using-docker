@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
+	valkeydocker "github.com/testcontainers/testcontainers-go/modules/valkey"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -55,21 +56,12 @@ func main() {
 	fmt.Println(value)
 }
 
-// Best way to use Valkey with Docker containers. Everything is managed
-// by the TestContainers library. You can find more information about
-// TestContainers here: https://golang.testcontainers.org
 func createContainerWithValkey(ctx context.Context) (*valkeyContainer, error) {
-	containerRequest := testcontainers.ContainerRequest{
-		Name:         "valkey",
-		Image:        "valkey/valkey:7.2.5",
-		ExposedPorts: []string{"6379/tcp"},
-		WaitingFor:   wait.ForListeningPort("6379/tcp"),
-	}
-	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: containerRequest,
-		Started:          true,
-		Reuse:            true,
-	})
+	container, err := valkeydocker.Run(ctx,
+		"valkey/valkey:7.2.6",
+		valkeydocker.WithLogLevel(valkeydocker.LogLevelVerbose),
+		valkeydocker.WithConfigFile(filepath.Join("conf", "valkey.conf")),
+	)
 	if err != nil {
 		log.Fatalf("Could not start Valkey: %s", err)
 		return nil, err
